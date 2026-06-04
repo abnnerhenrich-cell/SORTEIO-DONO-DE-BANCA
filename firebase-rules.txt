@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sorteios_dezenas/{docId} {
+      allow read, write: if true;
+    }
+    match /participantes_dezenas/{docId} {
+      allow read, write: if true;
+    }
+    match /ganhadores_dezenas/{docId} {
+      allow read, write: if true;
+    }
+
+    match /sorteios_centenas/{docId} {
+      allow read, write: if true;
+    }
+    match /participantes_centenas/{docId} {
+      allow read, write: if true;
+    }
+    match /ganhadores_centenas/{docId} {
+      allow read, write: if true;
+    }
+
+    match /config/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
