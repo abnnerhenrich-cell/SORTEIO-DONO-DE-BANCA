@@ -5,16 +5,28 @@ import {
   onSnapshot, query, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBI4-JqRRcqVAI0v7dXI9WtIx2unASVXys",
-  authDomain: "sorteio-dono-da-banca.firebaseapp.com",
-  projectId: "sorteio-dono-da-banca",
-  storageBucket: "sorteio-dono-da-banca.firebasestorage.app",
-  messagingSenderId: "394364598624",
-  appId: "1:394364598624:web:2f062e5f2563f6c2090605",
-  measurementId: "G-QVC48PRBM9"
+const firebaseConfigs = {
+  dezenas: {
+    apiKey: "AIzaSyBI4-JqRRcqVAI0v7dXI9WtIx2unASVXys",
+    authDomain: "sorteio-dono-da-banca.firebaseapp.com",
+    projectId: "sorteio-dono-da-banca",
+    storageBucket: "sorteio-dono-da-banca.firebasestorage.app",
+    messagingSenderId: "394364598624",
+    appId: "1:394364598624:web:97fc79bc06300cd8090605",
+    measurementId: "G-SXFX6LQ969"
+  },
+  centenas: {
+    apiKey: "AIzaSyBI4-JqRRcqVAI0v7dXI9WtIx2unASVXys",
+    authDomain: "sorteio-dono-da-banca.firebaseapp.com",
+    projectId: "sorteio-dono-da-banca",
+    storageBucket: "sorteio-dono-da-banca.firebasestorage.app",
+    messagingSenderId: "394364598624",
+    appId: "1:394364598624:web:ecd75f94921260e8090605",
+    measurementId: "G-45RSZGM8DL"
+  }
 };
 
+const firebaseConfig = firebaseConfigs[window.SORTEIO_CONFIG?.tipo] || firebaseConfigs.dezenas;
 const app = initializeApp(firebaseConfig);
 const firestore = getFirestore(app);
 
@@ -22,7 +34,7 @@ const ADMIN_PASSWORD = 'Marjorie06092025';
 const cfg = window.SORTEIO_CONFIG || {tipo:'dezenas',label:'Dezenas',itemName:'dezena',total:100,digits:2};
 
 let currentSorteioId = null;
-let selectedNumero = null;
+let selectedNumeros = [];
 let sorteios = [];
 let participantes = [];
 let ganhadores = [];
@@ -117,7 +129,25 @@ function adminTab(tab){
 }
 
 function todosNumeros(){return Array.from({length:cfg.total},(_,i)=>String(i).padStart(cfg.digits,'0'))}
-function numerosOcupados(sorteioId){return participantes.filter(p=>p.sorteioId===sorteioId).map(p=>p.numero)}
+function numerosOcupados(sorteioId){
+  return participantes
+    .filter(p=>p.sorteioId===sorteioId)
+    .flatMap(p=>Array.isArray(p.numeros) ? p.numeros : (p.numero ? [p.numero] : []));
+}
+
+function limiteSorteio(sorteio){
+  const n = Number(sorteio?.limiteNumeros || 1);
+  return n === 2 ? 2 : 1;
+}
+function numerosDoParticipante(p){
+  if(Array.isArray(p.numeros)) return p.numeros;
+  if(p.numero) return [p.numero];
+  return [];
+}
+function textoNumeros(p){
+  return numerosDoParticipante(p).join(', ');
+}
+
 function normalizarWhats(w){return String(w||'').replace(/[^0-9]/g,'')}
 function formatDate(d){
   if(!d) return '-';
@@ -149,6 +179,7 @@ function renderAll(){
     sorteiosGrid.innerHTML=ativos.map(s=>{
       const ocupadas=numerosOcupados(s.id).length;
       const livres=cfg.total-ocupadas;
+      const limite=limiteSorteio(s);
       return `<div class="sorteio">
         <div>
           <span class="tag">ATIVO</span>
@@ -156,6 +187,7 @@ function renderAll(){
           <p>${escapeHtml(s.descricao||'')}</p>
           <div class="price">${escapeHtml(s.premio)}</div>
           <p>Data: ${formatDate(s.data)}</p>
+          <span class="limit-chip">Cada cliente escolhe ${limite} ${cfg.itemName}${limite>1?'s':''}</span>
           <div class="numero-info">
             <span class="mini-tag">${livres} ${cfg.itemName}s livres</span>
             <span class="mini-tag">${ocupadas} escolhidas</span>
@@ -173,7 +205,7 @@ function renderAll(){
       <h3>${escapeHtml(g.nome)}</h3>
       <p>Sorteio: ${escapeHtml(g.sorteioTitulo)}</p>
       <div class="price">${escapeHtml(g.premio)}</div>
-      <p>${capitalize(cfg.itemName)} sorteada: <strong>${g.numero||'-'}</strong></p>
+      <p>${capitalize(cfg.itemName)}: <strong>${escapeHtml(g.numero || textoNumeros(g) || '-')}</strong></p>
       <p>WhatsApp: ${escapeHtml(g.whats)}</p>
       <p>Data: ${formatDate(g.data)}</p>
     </div>`).join('') || '<div class="sorteio">Nenhum ganhador divulgado ainda.</div>';
@@ -184,13 +216,15 @@ function renderAll(){
 
 function openParticipar(id){
   currentSorteioId=id;
-  selectedNumero=null;
+  selectedNumeros=[];
   const s=sorteios.find(x=>x.id===id);
   if(!s) return alert('Sorteio não encontrado.');
   const ocupadas=numerosOcupados(id);
+  const limite=limiteSorteio(s);
 
   $('participarInfo').innerHTML=`<p class="lead"><strong>${escapeHtml(s.titulo)}</strong><br>${escapeHtml(s.premio)}</p>
-    <div class="notice">Escolha uma ${cfg.itemName} disponível. Cada WhatsApp pode participar com apenas 1 ${cfg.itemName} neste sorteio.</div>
+    <div class="notice">Escolha ${limite} ${cfg.itemName}${limite>1?'s':''} disponível${limite>1?'is':''}. Cada WhatsApp pode participar uma vez neste sorteio.</div>
+    <div id="contadorEscolhas" class="choice-counter">Selecionadas: 0 de ${limite}</div>
     <div class="numeros-grid">${todosNumeros().map(n=>`<button type="button" class="numero-btn ${ocupadas.includes(n)?'taken':''}" ${ocupadas.includes(n)?'disabled':''} onclick="selecionarNumero('${n}')">${n}</button>`).join('')}</div>
     <div id="numeroEscolhido" class="notice hidden"></div>`;
 
@@ -200,41 +234,74 @@ function openParticipar(id){
 }
 
 function selecionarNumero(numero){
-  selectedNumero=numero;
-  document.querySelectorAll('.numero-btn').forEach(btn=>btn.classList.remove('selected'));
-  [...document.querySelectorAll('.numero-btn')].find(btn=>btn.textContent===numero)?.classList.add('selected');
+  const s=sorteios.find(x=>x.id===currentSorteioId);
+  const limite=limiteSorteio(s);
+
+  if(selectedNumeros.includes(numero)){
+    selectedNumeros=selectedNumeros.filter(n=>n!==numero);
+  }else{
+    if(selectedNumeros.length >= limite){
+      alert(`Você só pode escolher ${limite} ${cfg.itemName}${limite>1?'s':''} neste sorteio.`);
+      return;
+    }
+    selectedNumeros.push(numero);
+  }
+
+  document.querySelectorAll('.numero-btn').forEach(btn=>{
+    btn.classList.toggle('selected', selectedNumeros.includes(btn.textContent));
+  });
+
+  const contador=$('contadorEscolhas');
+  if(contador) contador.textContent=`Selecionadas: ${selectedNumeros.length} de ${limite}`;
+
   const box=$('numeroEscolhido');
-  if(box){box.textContent=capitalize(cfg.itemName)+' escolhida: '+numero;box.classList.remove('hidden');}
+  if(box){
+    box.textContent=selectedNumeros.length ? `${capitalize(cfg.itemName)} escolhida${selectedNumeros.length>1?'s':''}: ${selectedNumeros.join(', ')}` : '';
+    box.classList.toggle('hidden', selectedNumeros.length===0);
+  }
 }
 
 function closeModal(id){$(id)?.classList.add('hidden')}
 
-async function salvarParticipacao(){
+async async function salvarParticipacao(){
   const nome=$('pNome')?.value.trim() || '';
   const whats=$('pWhats')?.value.trim() || '';
   const whatsLimpo=normalizarWhats(whats);
 
-  if(!nome||!whats) return alert('Preencha nome e WhatsApp.');
-  if(whatsLimpo.length<10 || whatsLimpo.length>11) return alert('Digite um WhatsApp válido usando apenas números, com DDD.');
-  if(!selectedNumero) return alert(`Escolha uma ${cfg.itemName} para participar.`);
-
   const s=sorteios.find(x=>x.id===currentSorteioId);
   if(!s) return alert('Sorteio não encontrado.');
+  const limite=limiteSorteio(s);
+
+  if(!nome||!whats) return alert('Preencha nome e WhatsApp.');
+  if(whatsLimpo.length<10 || whatsLimpo.length>11) return alert('Digite um WhatsApp válido usando apenas números, com DDD.');
+  if(selectedNumeros.length !== limite) return alert(`Escolha exatamente ${limite} ${cfg.itemName}${limite>1?'s':''} para participar.`);
 
   const snapWhats=await getDocs(query(col('participantes'),where('sorteioId','==',s.id),where('whatsLimpo','==',whatsLimpo)));
   if(!snapWhats.empty) return alert('Este WhatsApp já participou deste sorteio.');
 
-  const snapNumero=await getDocs(query(col('participantes'),where('sorteioId','==',s.id),where('numero','==',selectedNumero)));
-  if(!snapNumero.empty) return alert(`Essa ${cfg.itemName} já foi escolhida.`);
+  for(const numero of selectedNumeros){
+    const snapNumero=await getDocs(query(col('participantes'),where('sorteioId','==',s.id),where('numeros','array-contains',numero)));
+    const snapNumeroAntigo=await getDocs(query(col('participantes'),where('sorteioId','==',s.id),where('numero','==',numero)));
+    if(!snapNumero.empty || !snapNumeroAntigo.empty) return alert(`A ${cfg.itemName} ${numero} já foi escolhida.`);
+  }
 
   await addDoc(col('participantes'),{
-    tipo:cfg.tipo,sorteioId:s.id,sorteioTitulo:s.titulo,nome,whats,whatsLimpo,
-    numero:selectedNumero,data:new Date().toISOString().slice(0,10),criadoEm:serverTimestamp()
+    tipo:cfg.tipo,
+    sorteioId:s.id,
+    sorteioTitulo:s.titulo,
+    nome,
+    whats,
+    whatsLimpo,
+    numeros:[...selectedNumeros],
+    numero:selectedNumeros.join(', '),
+    limiteNumeros:limite,
+    data:new Date().toISOString().slice(0,10),
+    criadoEm:serverTimestamp()
   });
 
-  selectedNumero=null;
+  selectedNumeros=[];
   closeModal('participarModal');
-  alert(`Participação confirmada! Sua ${cfg.itemName} foi reservada. Boa sorte.`);
+  alert(`Participação confirmada! Boa sorte.`);
 }
 
 function renderAdmin(){
@@ -260,6 +327,11 @@ function renderAdmin(){
       <input id="sPremio" placeholder="Ex: R$ 50,00">
       <label>Data</label>
       <input id="sData" type="date">
+      <label>Quantidade que cada cliente pode escolher</label>
+      <select id="sLimiteNumeros">
+        <option value="1">1 ${cfg.itemName}</option>
+        <option value="2">2 ${cfg.itemName}s</option>
+      </select>
       <button type="button" class="btn ok" onclick="criarSorteio()">➕ Criar Sorteio</button>
     </div><br>${tableSorteios()}`;
 
@@ -272,7 +344,7 @@ function renderAdmin(){
       <div class="notice">Escolha o participante que acertou a ${cfg.itemName}.</div>
       <select id="ganhadorManual">
         <option value="">Selecione o ganhador</option>
-        ${participantes.map(p=>`<option value="${p.id}">${p.numero} - ${escapeHtml(p.nome)} | ${escapeHtml(p.sorteioTitulo)}</option>`).join('')}
+        ${participantes.map(p=>`<option value="${p.id}">${escapeHtml(textoNumeros(p))} - ${escapeHtml(p.nome)} | ${escapeHtml(p.sorteioTitulo)}</option>`).join('')}
       </select>
       <button type="button" class="btn ok" onclick="sortearGanhador()">🏆 Confirmar Ganhador</button>
     </div><br>${tableGanhadores()}`;
@@ -293,11 +365,12 @@ function renderAdmin(){
 
 function tableSorteios(){
   return `<div class="table-wrap"><table class="table">
-    <tr><th>Título</th><th>Prêmio</th><th>${cfg.label}</th><th>Status</th><th>Ação</th></tr>
+    <tr><th>Título</th><th>Prêmio</th><th>Escolhas</th><th>${cfg.label}</th><th>Status</th><th>Ação</th></tr>
     ${sorteios.map(s=>{
       const qtd=numerosOcupados(s.id).length;
+      const limite=limiteSorteio(s);
       return `<tr>
-        <td>${escapeHtml(s.titulo)}</td><td>${escapeHtml(s.premio)}</td><td>${qtd}/${cfg.total}</td><td>${s.status}</td>
+        <td>${escapeHtml(s.titulo)}</td><td>${escapeHtml(s.premio)}</td><td>${limite}</td><td>${qtd}/${cfg.total}</td><td>${s.status}</td>
         <td><button type="button" class="btn secondary" onclick="toggleSorteio('${s.id}')">Ativar/Pausar</button>
         <button type="button" class="btn danger" onclick="excluirSorteio('${s.id}')">Excluir</button></td>
       </tr>`;
@@ -306,22 +379,23 @@ function tableSorteios(){
 }
 function tableParticipantes(){
   return `<div class="table-wrap"><table class="table">
-    <tr><th>${capitalize(cfg.itemName)}</th><th>Nome</th><th>WhatsApp</th><th>Sorteio</th></tr>
-    ${participantes.map(p=>`<tr><td><strong>${p.numero||'-'}</strong></td><td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.whats)}</td><td>${escapeHtml(p.sorteioTitulo)}</td></tr>`).join('')}
+    <tr><th>${capitalize(cfg.itemName)}(s)</th><th>Nome</th><th>WhatsApp</th><th>Sorteio</th></tr>
+    ${participantes.map(p=>`<tr><td><strong>${escapeHtml(textoNumeros(p) || '-')}</strong></td><td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.whats)}</td><td>${escapeHtml(p.sorteioTitulo)}</td></tr>`).join('')}
   </table></div>`;
 }
 function tableGanhadores(){
   return `<div class="table-wrap"><table class="table">
-    <tr><th>${capitalize(cfg.itemName)}</th><th>Nome</th><th>Sorteio</th><th>Prêmio</th><th>Data</th></tr>
-    ${ganhadores.map(g=>`<tr><td><strong>${g.numero||'-'}</strong></td><td>${escapeHtml(g.nome)}</td><td>${escapeHtml(g.sorteioTitulo)}</td><td>${escapeHtml(g.premio)}</td><td>${formatDate(g.data)}</td></tr>`).join('')}
+    <tr><th>${capitalize(cfg.itemName)}(s)</th><th>Nome</th><th>Sorteio</th><th>Prêmio</th><th>Data</th></tr>
+    ${ganhadores.map(g=>`<tr><td><strong>${escapeHtml(g.numero || textoNumeros(g) || '-')}</strong></td><td>${escapeHtml(g.nome)}</td><td>${escapeHtml(g.sorteioTitulo)}</td><td>${escapeHtml(g.premio)}</td><td>${formatDate(g.data)}</td></tr>`).join('')}
   </table></div>`;
 }
 
-async function criarSorteio(){
+async async function criarSorteio(){
   const titulo=$('sTitulo')?.value.trim() || '';
   const descricao=$('sDesc')?.value.trim() || '';
   const premio=$('sPremio')?.value.trim() || '';
   const data=$('sData')?.value || new Date().toISOString().slice(0,10);
+  const limiteNumeros=Number($('sLimiteNumeros')?.value || 1);
 
   if(!titulo || !premio) return alert('Preencha título e prêmio.');
 
@@ -329,14 +403,16 @@ async function criarSorteio(){
     await addDoc(col('sorteios'),{
       tipo:cfg.tipo,
       titulo,
-      descricao: descricao || `Escolha uma ${cfg.itemName} disponível para participar.`,
+      descricao: descricao || `Escolha ${limiteNumeros} ${cfg.itemName}${limiteNumeros>1?'s':''} disponível${limiteNumeros>1?'is':''} para participar.`,
       premio,
+      limiteNumeros,
       status:'ativo',
       data,
       criadoEm:serverTimestamp()
     });
 
     ['sTitulo','sDesc','sPremio','sData'].forEach(id=>{if($(id)) $(id).value='';});
+    if($('sLimiteNumeros')) $('sLimiteNumeros').value='1';
     alert('Sorteio criado com sucesso!');
     renderAll();
     adminTab('sorteios');
@@ -359,18 +435,28 @@ async function excluirSorteio(id){
   const ganhSnap=await getDocs(query(col('ganhadores'),where('sorteioId','==',id)));
   for(const item of ganhSnap.docs) await deleteDoc(doc(firestore,`ganhadores_${cfg.tipo}`,item.id));
 }
-async function sortearGanhador(){
+async async function sortearGanhador(){
   const participanteId=$('ganhadorManual')?.value || '';
   if(!participanteId) return alert('Selecione um participante.');
   const p=participantes.find(x=>x.id===participanteId);
   if(!p) return alert('Participante não encontrado.');
   const s=sorteios.find(x=>x.id===p.sorteioId);
-  const ja=ganhadores.some(g=>g.participanteId===p.id || (g.sorteioId===p.sorteioId && g.numero===p.numero));
+  const nums=numerosDoParticipante(p);
+  const ja=ganhadores.some(g=>g.participanteId===p.id);
   if(ja) return alert('Esse participante já está marcado como ganhador.');
+
   await addDoc(col('ganhadores'),{
-    tipo:cfg.tipo,participanteId:p.id,nome:p.nome,whats:p.whats,numero:p.numero,
-    sorteioId:p.sorteioId,sorteioTitulo:p.sorteioTitulo,premio:s?.premio||'Prêmio',
-    data:new Date().toISOString().slice(0,10),criadoEm:serverTimestamp()
+    tipo:cfg.tipo,
+    participanteId:p.id,
+    nome:p.nome,
+    whats:p.whats,
+    numeros:nums,
+    numero:nums.join(', '),
+    sorteioId:p.sorteioId,
+    sorteioTitulo:p.sorteioTitulo,
+    premio:s?.premio||'Prêmio',
+    data:new Date().toISOString().slice(0,10),
+    criadoEm:serverTimestamp()
   });
   alert('Ganhador confirmado: '+p.nome);
 }

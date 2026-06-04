@@ -40,3 +40,26 @@ No Firebase:
 3. Cole o conteúdo do arquivo `firebase-rules.txt`.
 4. Publique.
 
+
+
+## Atualização premium
+- Visual premium melhorado.
+- No Admin > Sorteios, agora dá para escolher se cada cliente marca 1 ou 2 dezenas/centenas.
+- Compatível com sorteios antigos de 1 escolha.
+
+
+## Firebase separado por página
+
+Agora o site usa:
+
+### Dezenas
+- appId: `1:394364598624:web:97fc79bc06300cd8090605`
+- measurementId: `G-SXFX6LQ969`
+
+### Centenas
+- appId: `1:394364598624:web:ecd75f94921260e8090605`
+- measurementId: `G-45RSZGM8DL`
+
+O código escolhe automaticamente o Firebase correto pela rota:
+- `/dezenas/` usa o Firebase de dezena
+- `/centenas/` usa o Firebase de centena
