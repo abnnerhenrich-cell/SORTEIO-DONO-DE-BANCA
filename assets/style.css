@@ -800,3 +800,17 @@ button:before,
 .menu a{
   cursor:pointer!important;
 }
+
+
+/* Login Admin visível e acima de tudo */
+#loginModal{
+  z-index:12000!important;
+}
+#loginModal .modal-box{
+  z-index:12001!important;
+}
+#loginModal input,
+#loginModal button{
+  z-index:12002!important;
+  pointer-events:auto!important;
+}

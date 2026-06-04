@@ -184,18 +184,35 @@ async function salvarParticipacao(){
   alert(`Participação confirmada! Sua ${cfg.itemName} foi reservada. Boa sorte.`);
 }
 
-function openLogin(){loginModal.classList.remove('hidden')}
+function openLogin(){
+  const input = document.getElementById('adminSenha');
+  if(input) input.value = '';
+  const modal = document.getElementById('loginModal');
+  if(modal) modal.classList.remove('hidden');
+}
 function loginAdmin(){
   const senha = document.getElementById('adminSenha')?.value || '';
-  if(senha===ADMIN_PASSWORD){
+  if(senha === ADMIN_PASSWORD){
     sessionStorage.setItem('adminLogado','sim');
     closeModal('loginModal');
-    showPage('admin');
+    const admin = document.getElementById('adminPage');
+    const home = document.getElementById('homePage');
+    const ganhadores = document.getElementById('ganhadoresPage');
+    if(home) home.classList.add('hidden');
+    if(ganhadores) ganhadores.classList.add('hidden');
+    if(admin) admin.classList.remove('hidden');
+    renderAll();
+    adminTab('dashboard');
   } else {
     alert('Senha incorreta.');
   }
 }
-function logoutAdmin(){sessionStorage.removeItem('adminLogado');showPage('home')}
+function logoutAdmin(){
+  sessionStorage.removeItem('adminLogado');
+  const input = document.getElementById('adminSenha');
+  if(input) input.value = '';
+  showPage('home');
+}
 function adminTab(tab){
   const tabs = {
     dashboard: tabDashboard,
