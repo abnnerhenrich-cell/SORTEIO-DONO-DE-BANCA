@@ -66,34 +66,31 @@ async function iniciarFirebase(){
 }
 
 function showPage(page){
-  const pages = {
-    home: document.getElementById('homePage'),
-    ganhadores: document.getElementById('ganhadoresPage'),
-    admin: document.getElementById('adminPage')
-  };
+  const home = document.getElementById('homePage');
+  const ganhadores = document.getElementById('ganhadoresPage');
+  const admin = document.getElementById('adminPage');
 
-  Object.values(pages).forEach(el => {
-    if(el) el.classList.add('hidden');
-  });
+  if(home) home.classList.add('hidden');
+  if(ganhadores) ganhadores.classList.add('hidden');
+  if(admin) admin.classList.add('hidden');
+
+  if(page === 'ganhadores'){
+    if(ganhadores) ganhadores.classList.remove('hidden');
+    renderAll();
+    return;
+  }
 
   if(page === 'admin'){
     if(sessionStorage.getItem('adminLogado') !== 'sim'){
-      adminSenha.value = '';
       return openLogin();
     }
-    if(pages.admin) pages.admin.classList.remove('hidden');
+    if(admin) admin.classList.remove('hidden');
     renderAll();
     adminTab('dashboard');
     return;
   }
 
-  if(page === 'ganhadores'){
-    if(pages.ganhadores) pages.ganhadores.classList.remove('hidden');
-    renderAll();
-    return;
-  }
-
-  if(pages.home) pages.home.classList.remove('hidden');
+  if(home) home.classList.remove('hidden');
   renderAll();
 }
 function todosNumeros(){return Array.from({length:cfg.total},(_,i)=>String(i).padStart(cfg.digits,'0'))}
@@ -186,9 +183,9 @@ async function salvarParticipacao(){
 }
 
 function openLogin(){
-  const input = document.getElementById('adminSenha');
-  if(input) input.value = '';
   const modal = document.getElementById('loginModal');
+  const senha = document.getElementById('adminSenha');
+  if(senha) senha.value = '';
   if(modal) modal.classList.remove('hidden');
 }
 function loginAdmin(){
@@ -197,10 +194,10 @@ function loginAdmin(){
     sessionStorage.setItem('adminLogado','sim');
     closeModal('loginModal');
     showPage('admin');
-  } else {
-    sessionStorage.removeItem('adminLogado');
-    alert('Senha incorreta. Acesso negado.');
+    return;
   }
+  sessionStorage.removeItem('adminLogado');
+  alert('Senha incorreta. Acesso negado.');
 }
 function logoutAdmin(){
   sessionStorage.removeItem('adminLogado');
@@ -209,24 +206,24 @@ function logoutAdmin(){
   showPage('home');
 }
 function adminTab(tab){
+  if(sessionStorage.getItem('adminLogado') !== 'sim'){
+    return openLogin();
+  }
+
   const tabs = {
-    dashboard: tabDashboard,
-    sorteios: tabSorteios,
-    participantes: tabParticipantes,
-    premiados: tabPremiados,
-    aparencia: tabAparencia
+    dashboard: document.getElementById('tabDashboard'),
+    sorteios: document.getElementById('tabSorteios'),
+    participantes: document.getElementById('tabParticipantes'),
+    premiados: document.getElementById('tabPremiados'),
+    aparencia: document.getElementById('tabAparencia')
   };
+
   document.querySelectorAll('.admin-tab').forEach(e=>e.classList.add('hidden'));
   if(tabs[tab]) tabs[tab].classList.remove('hidden');
-  renderAdmin();
 }
 
 function renderAdmin(){
-  if(sessionStorage.getItem('adminLogado')!=='sim'){
-    const admin = document.getElementById('adminPage');
-    if(admin) admin.classList.add('hidden');
-    return;
-  }
+  if(sessionStorage.getItem('adminLogado')!=='sim') return;
 
   tabDashboard.innerHTML =
     `<h2 class="section-title">Painel Admin - ${cfg.label}</h2>

@@ -823,3 +823,16 @@ button:before,
 #adminPage.hidden{
   display:none!important;
 }
+
+
+/* Correção: botão Admin abre login */
+#loginModal{
+  z-index:99999!important;
+}
+#loginModal .modal-box{
+  max-width:440px!important;
+  pointer-events:auto!important;
+}
+#loginModal.hidden{
+  display:none!important;
+}
