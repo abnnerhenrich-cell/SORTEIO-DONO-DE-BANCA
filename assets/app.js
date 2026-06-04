@@ -62,46 +62,61 @@ function hideAllPages(){
 }
 
 function showPage(page){
-  hideAllPages();
+  const home = document.getElementById('homePage');
+  const ganhadores = document.getElementById('ganhadoresPage');
+  const admin = document.getElementById('adminPage');
 
-  if(page==='admin'){
-    if(sessionStorage.getItem('adminLogado')!=='sim'){
+  if(home) home.classList.add('hidden');
+  if(ganhadores) ganhadores.classList.add('hidden');
+  if(admin) admin.classList.add('hidden');
+
+  if(page === 'ganhadores'){
+    if(ganhadores) ganhadores.classList.remove('hidden');
+    renderAll();
+    window.scrollTo({top:0, behavior:'smooth'});
+    return;
+  }
+
+  if(page === 'admin'){
+    if(sessionStorage.getItem('adminLogado') !== 'sim'){
       openLogin();
       return;
     }
-    $('adminPage')?.classList.remove('hidden');
+    if(admin) admin.classList.remove('hidden');
     renderAll();
     adminTab('dashboard');
+    window.scrollTo({top:0, behavior:'smooth'});
     return;
   }
 
-  if(page==='ganhadores'){
-    $('ganhadoresPage')?.classList.remove('hidden');
-    renderAll();
-    return;
-  }
-
-  $('homePage')?.classList.remove('hidden');
+  if(home) home.classList.remove('hidden');
   renderAll();
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function openLogin(){
-  const senha=$('adminSenha');
-  if(senha) senha.value='';
-  $('loginModal')?.classList.remove('hidden');
-  setTimeout(()=>senha?.focus(),80);
+  const modal = document.getElementById('loginModal');
+  const senha = document.getElementById('adminSenha');
+
+  if(senha) senha.value = '';
+  if(modal){
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  setTimeout(()=>senha?.focus(),100);
 }
 
 function loginAdmin(){
-  const senha=$('adminSenha')?.value || '';
-  if(senha===ADMIN_PASSWORD){
+  const senha = document.getElementById('adminSenha')?.value || '';
+  if(senha === ADMIN_PASSWORD){
     sessionStorage.setItem('adminLogado','sim');
     closeModal('loginModal');
     showPage('admin');
-  }else{
-    sessionStorage.removeItem('adminLogado');
-    alert('Senha incorreta. Acesso negado.');
+    return;
   }
+  sessionStorage.removeItem('adminLogado');
+  alert('Senha incorreta. Acesso negado.');
 }
 
 function logoutAdmin(){
@@ -110,22 +125,26 @@ function logoutAdmin(){
 }
 
 function adminTab(tab){
-  if(sessionStorage.getItem('adminLogado')!=='sim'){
+  if(sessionStorage.getItem('adminLogado') !== 'sim'){
     openLogin();
     return;
   }
+
   renderAdmin();
 
-  const tabs={
-    dashboard:$('tabDashboard'),
-    sorteios:$('tabSorteios'),
-    participantes:$('tabParticipantes'),
-    premiados:$('tabPremiados'),
-    aparencia:$('tabAparencia')
+  const tabs = {
+    dashboard: document.getElementById('tabDashboard'),
+    sorteios: document.getElementById('tabSorteios'),
+    participantes: document.getElementById('tabParticipantes'),
+    premiados: document.getElementById('tabPremiados'),
+    aparencia: document.getElementById('tabAparencia')
   };
 
-  document.querySelectorAll('.admin-tab').forEach(el=>el.classList.add('hidden'));
-  tabs[tab]?.classList.remove('hidden');
+  document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
+
+  if(tabs[tab]){
+    tabs[tab].classList.remove('hidden');
+  }
 }
 
 function todosNumeros(){return Array.from({length:cfg.total},(_,i)=>String(i).padStart(cfg.digits,'0'))}
@@ -261,7 +280,13 @@ function selecionarNumero(numero){
   }
 }
 
-function closeModal(id){$(id)?.classList.add('hidden')}
+function closeModal(id){
+  const modal = document.getElementById(id);
+  if(modal){
+    modal.classList.add('hidden');
+    modal.style.display = '';
+  }
+}
 
 async async function salvarParticipacao(){
   const nome=$('pNome')?.value.trim() || '';
@@ -485,3 +510,11 @@ window.addEventListener('mousemove',e=>{
 });
 
 iniciarFirebase();
+
+
+// Exposição global dos botões do HTML
+window.showPage = showPage;
+window.openLogin = openLogin;
+window.loginAdmin = loginAdmin;
+window.closeModal = closeModal;
+window.adminTab = adminTab;

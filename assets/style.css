@@ -771,3 +771,45 @@ input,select,textarea{
     padding:9px 10px;
   }
 }
+
+
+/* CORREÇÃO BOTÕES GANHADORES E ADMIN */
+#homePage.hidden,
+#ganhadoresPage.hidden,
+#adminPage.hidden,
+#loginModal.hidden,
+#participarModal.hidden{
+  display:none!important;
+}
+
+#loginModal{
+  display:flex;
+  z-index:999999!important;
+  pointer-events:auto!important;
+}
+
+#loginModal .modal-box{
+  z-index:1000000!important;
+  pointer-events:auto!important;
+}
+
+.menu,
+.menu button,
+.menu a,
+button,
+.btn,
+input,
+select,
+textarea{
+  pointer-events:auto!important;
+  position:relative!important;
+  z-index:50!important;
+}
+
+body:before,
+body:after,
+.sorteio:before,
+.sorteio:after,
+.numero-btn:before{
+  pointer-events:none!important;
+}
