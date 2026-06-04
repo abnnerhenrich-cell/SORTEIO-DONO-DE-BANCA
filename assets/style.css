@@ -813,3 +813,34 @@ body:after,
 .numero-btn:before{
   pointer-events:none!important;
 }
+
+
+/* FIX FINAL SEM ONCLICK */
+#homePage.hidden,
+#ganhadoresPage.hidden,
+#adminPage.hidden,
+#loginModal.hidden,
+#participarModal.hidden{
+  display:none!important;
+}
+#loginModal,
+#participarModal{
+  z-index:999999!important;
+}
+.menu,
+.menu *,
+button,
+.btn,
+a,
+input,
+select,
+textarea,
+.numero-btn{
+  pointer-events:auto!important;
+}
+body:before,
+body:after,
+.sorteio:before,
+.sorteio:after{
+  pointer-events:none!important;
+}
