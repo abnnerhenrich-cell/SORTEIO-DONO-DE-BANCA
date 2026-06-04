@@ -3,6 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Sorteios de dezenas
     match /sorteios_dezenas/{docId} {
       allow read, write: if true;
     }
@@ -13,6 +14,7 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Sorteios de centenas
     match /sorteios_centenas/{docId} {
       allow read, write: if true;
     }
@@ -23,6 +25,7 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Aparência / URL de cadastro
     match /config/{docId} {
       allow read, write: if true;
     }

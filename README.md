@@ -63,3 +63,12 @@ Agora o site usa:
 O código escolhe automaticamente o Firebase correto pela rota:
 - `/dezenas/` usa o Firebase de dezena
 - `/centenas/` usa o Firebase de centena
+
+
+## Correção de persistência Firebase
+
+Este pacote confirma a gravação do sorteio no Firestore com `getDoc()` logo depois de criar.
+Se o Firestore bloquear, o site mostra um alerta explicando que as regras precisam ser publicadas.
+
+Cole o conteúdo de `firebase-rules.txt` em:
+Firebase > Firestore Database > Regras > Publicar

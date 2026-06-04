@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import {
-  getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
+  getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, getDoc,
   onSnapshot, query, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
@@ -395,7 +395,7 @@ async function criarSorteio(){
   if(!titulo || !premio) return alert('Preencha título e prêmio.');
 
   try{
-    await addDoc(col('sorteios'), {
+    const payload = {
       tipo: cfg.tipo,
       titulo,
       descricao: descricao || `Escolha ${limiteNumeros} ${cfg.itemName}${limiteNumeros>1?'s':''} para participar.`,
@@ -403,15 +403,31 @@ async function criarSorteio(){
       limiteNumeros,
       status: 'ativo',
       data,
-      criadoEm: serverTimestamp()
-    });
+      criadoEm: serverTimestamp(),
+      atualizadoEm: serverTimestamp()
+    };
 
-    alert('Sorteio criado com sucesso!');
+    const ref = await addDoc(col('sorteios'), payload);
+
+    // Confirma que o documento realmente ficou salvo no Firestore.
+    const confirmado = await getDoc(ref);
+    if(!confirmado.exists()){
+      throw new Error('O Firebase não confirmou a gravação do sorteio.');
+    }
+
+    alert('Sorteio criado e salvo no Firebase com sucesso!');
+
+    // limpa o formulário
+    if($('sTitulo')) $('sTitulo').value = '';
+    if($('sDesc')) $('sDesc').value = '';
+    if($('sPremio')) $('sPremio').value = '';
+    if($('sData')) $('sData').value = '';
+    if($('sLimiteNumeros')) $('sLimiteNumeros').value = '1';
+
     renderAll();
     adminTab('sorteios');
   }catch(err){
-    console.error(err);
-    alert('Erro ao criar sorteio. Confira as regras do Firebase.');
+    mostrarErroFirebase(err, 'criar sorteio');
   }
 }
 
@@ -520,23 +536,42 @@ function bindEvents(){
   });
 }
 
+
+let firebaseAvisoMostrado = false;
+function mostrarErroFirebase(erro, acao='operação'){
+  console.error('Erro Firebase em '+acao+':', erro);
+  if(firebaseAvisoMostrado) return;
+  firebaseAvisoMostrado = true;
+  alert(
+    'Erro no Firebase ao tentar fazer '+acao+'.\\n\\n' +
+    'Se o sorteio aparece e some ao atualizar, quase sempre é regra do Firestore bloqueando a gravação/leitura.\\n\\n' +
+    'Confira se você colou as regras do arquivo firebase-rules.txt no Firestore Database > Regras.'
+  );
+  setTimeout(()=>firebaseAvisoMostrado=false, 4000);
+}
+
 function iniciarFirebase(){
   onSnapshot(col('sorteios'), snap => {
-    sorteios = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    sorteios = snap.docs
+      .map(d => ({id:d.id, ...d.data()}))
+      .sort((a,b) => String(b.data||'').localeCompare(String(a.data||'')));
     renderAll();
-  });
+  }, erro => mostrarErroFirebase(erro, 'ler sorteios'));
+
   onSnapshot(col('participantes'), snap => {
     participantes = snap.docs.map(d => ({id:d.id, ...d.data()}));
     renderAll();
-  });
+  }, erro => mostrarErroFirebase(erro, 'ler participantes'));
+
   onSnapshot(col('ganhadores'), snap => {
     ganhadores = snap.docs.map(d => ({id:d.id, ...d.data()}));
     renderAll();
-  });
+  }, erro => mostrarErroFirebase(erro, 'ler ganhadores'));
+
   onSnapshot(configDoc(), snap => {
     if(snap.exists()) settings = {...settings, ...snap.data()};
     renderAll();
-  });
+  }, erro => mostrarErroFirebase(erro, 'ler configurações'));
 }
 
 window.addEventListener('mousemove', e => {
@@ -549,7 +584,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if(location.hash === '#admin') openLogin();
 });
 
-bindEvents();
 iniciarFirebase();
 
 // deixa disponível também para qualquer onclick antigo que tenha sobrado
