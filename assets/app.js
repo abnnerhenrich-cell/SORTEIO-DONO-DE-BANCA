@@ -387,3 +387,12 @@ window.addEventListener('touchmove', e => {
   document.body.style.setProperty('--mx', `${(t.clientX / window.innerWidth) * 100}%`);
   document.body.style.setProperty('--my', `${(t.clientY / window.innerHeight) * 100}%`);
 }, {passive:true});
+
+
+// Mostra erro real caso algum clique falhe
+window.addEventListener('error', function(e){
+  console.error('Erro no site:', e.message, e.error);
+});
+window.addEventListener('unhandledrejection', function(e){
+  console.error('Erro de promessa/Firebase:', e.reason);
+});

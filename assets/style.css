@@ -679,3 +679,106 @@ footer{
     scroll-behavior:auto!important;
   }
 }
+
+
+/* =========================
+   CORREÇÃO DE CLIQUES
+   ========================= */
+
+/* nada visual pode ficar por cima dos botões */
+body:before,
+body:after,
+.sorteio:before,
+.sorteio:after,
+.stat:after,
+.numero-btn:before,
+button:before,
+.btn:before{
+  pointer-events:none!important;
+}
+
+/* garante que o conteúdo clicável fique acima dos brilhos */
+header,
+.wrap,
+footer,
+.modal,
+.modal-box,
+.hero-card,
+.card,
+.sorteio,
+.stat,
+.admin-layout,
+.sidebar,
+.admin-tab,
+.form,
+.menu,
+.numeros-grid{
+  position:relative!important;
+}
+
+button,
+.btn,
+a,
+input,
+select,
+textarea,
+.numero-btn,
+.close{
+  position:relative!important;
+  z-index:50!important;
+  pointer-events:auto!important;
+}
+
+/* no painel admin, tudo clicável */
+#adminPage,
+#adminPage *,
+#participarModal,
+#participarModal *,
+#loginModal,
+#loginModal *{
+  pointer-events:auto!important;
+}
+
+/* remove animação que estava atrapalhando cliques em alguns celulares */
+button:before,
+.btn:before{
+  display:none!important;
+}
+
+/* evita camadas invisíveis no hero */
+.hero-card:first-child:before{
+  pointer-events:none!important;
+}
+
+/* botão de cadastro clicável */
+.cadastro-top,
+.cadastro-btn-top{
+  position:relative!important;
+  z-index:60!important;
+  pointer-events:auto!important;
+}
+
+/* cards não bloqueiam os botões internos */
+.sorteio > *,
+.stat > *,
+.card > *,
+.hero-card > *{
+  position:relative!important;
+  z-index:10!important;
+}
+
+/* modal sempre acima */
+.modal{
+  z-index:9999!important;
+}
+
+.modal-box{
+  z-index:10000!important;
+}
+
+/* admin aparece por cima de qualquer decoração */
+#adminPage{
+  position:relative!important;
+  z-index:100!important;
+}
+
