@@ -78,6 +78,7 @@ function showPage(page){
 
   if(page === 'admin'){
     if(sessionStorage.getItem('adminLogado') !== 'sim'){
+      adminSenha.value = '';
       return openLogin();
     }
     if(pages.admin) pages.admin.classList.remove('hidden');
@@ -195,22 +196,16 @@ function loginAdmin(){
   if(senha === ADMIN_PASSWORD){
     sessionStorage.setItem('adminLogado','sim');
     closeModal('loginModal');
-    const admin = document.getElementById('adminPage');
-    const home = document.getElementById('homePage');
-    const ganhadores = document.getElementById('ganhadoresPage');
-    if(home) home.classList.add('hidden');
-    if(ganhadores) ganhadores.classList.add('hidden');
-    if(admin) admin.classList.remove('hidden');
-    renderAll();
-    adminTab('dashboard');
+    showPage('admin');
   } else {
-    alert('Senha incorreta.');
+    sessionStorage.removeItem('adminLogado');
+    alert('Senha incorreta. Acesso negado.');
   }
 }
 function logoutAdmin(){
   sessionStorage.removeItem('adminLogado');
-  const input = document.getElementById('adminSenha');
-  if(input) input.value = '';
+  const senha = document.getElementById('adminSenha');
+  if(senha) senha.value = '';
   showPage('home');
 }
 function adminTab(tab){
@@ -227,7 +222,11 @@ function adminTab(tab){
 }
 
 function renderAdmin(){
-  if(sessionStorage.getItem('adminLogado')!=='sim') return;
+  if(sessionStorage.getItem('adminLogado')!=='sim'){
+    const admin = document.getElementById('adminPage');
+    if(admin) admin.classList.add('hidden');
+    return;
+  }
 
   tabDashboard.innerHTML =
     `<h2 class="section-title">Painel Admin - ${cfg.label}</h2>
@@ -426,4 +425,15 @@ window.addEventListener('error', function(e){
 });
 window.addEventListener('unhandledrejection', function(e){
   console.error('Erro de promessa/Firebase:', e.reason);
+});
+
+
+// Entrar no admin apertando Enter no campo da senha
+document.addEventListener('DOMContentLoaded', () => {
+  const campoSenha = document.getElementById('adminSenha');
+  if(campoSenha){
+    campoSenha.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') loginAdmin();
+    });
+  }
 });

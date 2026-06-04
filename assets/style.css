@@ -814,3 +814,12 @@ button:before,
   z-index:12002!important;
   pointer-events:auto!important;
 }
+
+
+/* Login admin protegido */
+#loginModal .modal-box{
+  max-width:430px!important;
+}
+#adminPage.hidden{
+  display:none!important;
+}
