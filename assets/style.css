@@ -836,3 +836,12 @@ button:before,
 #loginModal.hidden{
   display:none!important;
 }
+
+
+/* FIX FINAL ADMIN */
+#loginModal.hidden{display:none!important}
+#loginModal{display:flex;z-index:999999!important;pointer-events:auto!important}
+#loginModal *{pointer-events:auto!important}
+#loginModal .modal-box{max-width:450px!important;z-index:1000000!important}
+.menu button,.menu a,button,.btn,input,select,textarea{pointer-events:auto!important}
+body:before,body:after,.sorteio:before,.sorteio:after,.stat:after,.numero-btn:before{pointer-events:none!important}
