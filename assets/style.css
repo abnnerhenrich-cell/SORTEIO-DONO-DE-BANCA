@@ -782,3 +782,21 @@ button:before,
   z-index:100!important;
 }
 
+
+
+/* Correção definitiva de páginas */
+#homePage.hidden,
+#ganhadoresPage.hidden,
+#adminPage.hidden{
+  display:none!important;
+}
+#homePage,
+#ganhadoresPage,
+#adminPage{
+  position:relative!important;
+  z-index:10!important;
+}
+.menu button,
+.menu a{
+  cursor:pointer!important;
+}

@@ -66,24 +66,35 @@ async function iniciarFirebase(){
 }
 
 function showPage(page){
-  homePage.classList.add('hidden');
-  ganhadoresPage.classList.add('hidden');
-  adminPage.classList.add('hidden');
+  const pages = {
+    home: document.getElementById('homePage'),
+    ganhadores: document.getElementById('ganhadoresPage'),
+    admin: document.getElementById('adminPage')
+  };
 
-  if(page==='home') homePage.classList.remove('hidden');
-  if(page==='ganhadores') ganhadoresPage.classList.remove('hidden');
+  Object.values(pages).forEach(el => {
+    if(el) el.classList.add('hidden');
+  });
 
-  if(page==='admin') {
-    if(sessionStorage.getItem('adminLogado') !== 'sim') return openLogin();
-    adminPage.classList.remove('hidden');
+  if(page === 'admin'){
+    if(sessionStorage.getItem('adminLogado') !== 'sim'){
+      return openLogin();
+    }
+    if(pages.admin) pages.admin.classList.remove('hidden');
     renderAll();
     adminTab('dashboard');
     return;
   }
 
+  if(page === 'ganhadores'){
+    if(pages.ganhadores) pages.ganhadores.classList.remove('hidden');
+    renderAll();
+    return;
+  }
+
+  if(pages.home) pages.home.classList.remove('hidden');
   renderAll();
 }
-
 function todosNumeros(){return Array.from({length:cfg.total},(_,i)=>String(i).padStart(cfg.digits,'0'))}
 function numerosOcupados(sorteioId){return participantes.filter(p=>p.sorteioId===sorteioId).map(p=>p.numero)}
 function formatDate(d){
@@ -175,11 +186,14 @@ async function salvarParticipacao(){
 
 function openLogin(){loginModal.classList.remove('hidden')}
 function loginAdmin(){
-  if(adminSenha.value===ADMIN_PASSWORD){
+  const senha = document.getElementById('adminSenha')?.value || '';
+  if(senha===ADMIN_PASSWORD){
     sessionStorage.setItem('adminLogado','sim');
     closeModal('loginModal');
     showPage('admin');
-  } else alert('Senha incorreta.');
+  } else {
+    alert('Senha incorreta.');
+  }
 }
 function logoutAdmin(){sessionStorage.removeItem('adminLogado');showPage('home')}
 function adminTab(tab){
